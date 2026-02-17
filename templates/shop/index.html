@@ -1,0 +1,242 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>P1/Threads - Django E-commerce</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background-color: lightgray;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background-color: black;
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        
+        .cart-link {
+            background-color: #27ae60;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .cart-link:hover {
+            background-color: #219a52;
+        }
+        
+        #products {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        
+        .card {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 3px 3px 5px grey;
+            width: calc(33.333% - 14px);
+            transition: transform 0.2s;
+        }
+        
+        .card:hover {
+            transform: scale(1.02);
+        }
+        
+        .eimg {
+            width: 150px;
+            height: 150px;
+            object-fit: contain;
+            margin: 10px auto;
+            cursor: pointer;
+        }
+        
+        .etitle {
+            font-weight: bold;
+            font-size: 14px;
+            margin: 10px 0;
+            min-height: 40px;
+            cursor: pointer;
+            color: #2c3e50;
+        }
+        
+        .etitle:hover {
+            color: #3498db;
+            text-decoration: underline;
+        }
+        
+        .eprice {
+            font-size: 18px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin: 10px 0;
+        }
+        
+        .ebutton {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s;
+        }
+        
+        .ebutton:hover {
+            background-color: #2980b9;
+        }
+        
+        @media (max-width: 800px) {
+            .card { width: calc(50% - 10px); }
+        }
+        
+        @media (max-width: 500px) {
+            .card { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container"> 
+     <div class="header">
+    <h1>P1/Threads</h1>
+    <div style="display: flex; gap: 15px; align-items: center;">
+        {% if user.is_authenticated %}
+            <span style="color: white;">Hello, {{ user.username }}!</span>
+            <a href="{% url 'logout' %}" style="color: white; text-decoration: none; padding: 8px 15px; background: #e74c3c; border-radius: 5px;">Logout</a>
+            <a href="{% url 'order_history' %}" style="color: white; text-decoration: none; padding: 8px 15px; background: #9b59b6; border-radius: 5px;">📦 My Orders</a>
+        {% else %}
+            <a href="{% url 'login' %}" style="color: white; text-decoration: none; padding: 8px 15px; background: #3498db; border-radius: 5px;">Login</a>
+            <a href="{% url 'register' %}" style="color: white; text-decoration: none; padding: 8px 15px; background: #27ae60; border-radius: 5px;">Register</a>
+        {% endif %}
+        <a href="{% url 'cart_view' %}" style="background-color: #27ae60; color: white; padding: 8px 15px; border-radius: 5px; text-decoration: none; display: flex; align-items: center; gap: 5px;">
+            🛒 Cart (<span id="cart-count">0</span>)
+        </a>
+    </div>
+</div>
+
+        <!-- Messages Display Section -->
+        {% if messages %}
+        <div style="max-width: 1200px; margin: 20px auto;">
+            {% for message in messages %}
+            <div style="padding: 15px; border-radius: 5px; margin-bottom: 10px; 
+                {% if message.tags == 'success' %}
+                    background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb;
+                {% elif message.tags == 'error' %}
+                    background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb;
+                {% endif %}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        
+        <div id="products">
+            {% for product in products %}
+            <div class="card">
+                <div class="eid">{{ product.id }}</div>
+                <a href="/product/{{ product.id }}/" style="text-decoration: none; color: inherit;">
+                    <div class="etitle">{{ product.title|truncatechars:50 }}</div>
+                    <img src="{{ product.image }}" class="eimg" width="150" height="150" alt="{{ product.title }}">
+                </a>
+                <div class="eprice">${{ product.price }}</div>
+                <button class="ebutton" data-id="{{ product.id }}" data-price="{{ product.price }}" data-image="{{ product.image }}" data-title="{{ product.title }}" onclick="addToCart(this)">Shop This</button>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <script>
+        function addToCart(button) {
+            // Get all data from button attributes
+            let productId = parseInt(button.getAttribute('data-id'));
+            let productTitle = button.getAttribute('data-title');
+            let productPrice = parseFloat(button.getAttribute('data-price'));
+            let productImage = button.getAttribute('data-image');
+            
+            // Get existing cart from localStorage
+            let cart = JSON.parse(localStorage.getItem('cart')) || [];
+            
+            // Check if product already in cart
+            let existingItem = null;
+            for (let i = 0; i < cart.length; i++) {
+                if (cart[i].id === productId) {
+                    existingItem = cart[i];
+                    break;
+                }
+            }
+            
+            if (existingItem) {
+                existingItem.quantity += 1;
+                alert('Added another ' + productTitle + '! (Total: ' + existingItem.quantity + ')');
+            } else {
+                // Add new item to cart with ALL details
+                cart.push({
+                    id: productId,
+                    title: productTitle,
+                    price: productPrice,
+                    quantity: 1,
+                    image: productImage
+                });
+                alert('✅ ' + productTitle + ' added to cart!');
+            }
+            
+            // Save back to localStorage
+            localStorage.setItem('cart', JSON.stringify(cart));
+            
+            // Update cart count display
+            updateCartCount();
+        }
+        
+        function updateCartCount() {
+            let cart = JSON.parse(localStorage.getItem('cart')) || [];
+            let totalItems = 0;
+            
+            for (let i = 0; i < cart.length; i++) {
+                totalItems += cart[i].quantity;
+            }
+            
+            let cartCountElement = document.getElementById('cart-count');
+            if (cartCountElement) {
+                cartCountElement.textContent = totalItems;
+            }
+        }
+        
+        // Initialize cart count when page loads
+        window.onload = function() {
+            updateCartCount();
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,112 @@
+/* Reset styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: lightgray;
+    padding: 20px;
+    font-family: Arial, sans-serif;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+h1 {
+    background-color: black;
+    color: white;
+    text-align: center;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 30px;
+    box-shadow: 3px 5px 5px grey;
+    width: 100%;
+}
+
+/* Product grid - EXACTLY 3 CARDS PER ROW */
+#products {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);  /* This makes exactly 3 columns */
+    gap: 20px;
+    width: 100%;
+}
+
+/* Product card */
+.card {
+    background-color: white;
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 3px 3px 5px grey;
+    transition: transform 0.2s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100%;
+}
+
+.card:hover {
+    transform: scale(1.02);
+    background-color: #f0f0f0;
+}
+
+.eid {
+    font-weight: bold;
+    color: #666;
+    margin-bottom: 5px;
+}
+
+.etitle {
+    font-weight: bold;
+    font-size: 14px;
+    margin: 10px 0;
+    min-height: 40px;
+}
+
+.eimg {
+    width: 150px;
+    height: 150px;
+    object-fit: contain;
+    margin: 10px auto;
+    display: block;
+}
+
+.eprice {
+    font-size: 18px;
+    font-weight: bold;
+    color: #2c3e50;
+    margin: 10px 0;
+}
+
+.ebutton {
+    background-color: #3498db;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s;
+    margin-top: auto;
+}
+
+.ebutton:hover {
+    background-color: #2980b9;
+}
+
+/* For smaller screens - make it responsive */
+@media (max-width: 900px) {
+    #products {
+        grid-template-columns: repeat(2, 1fr);  /* 2 cards per row on medium screens */
+    }
+}
+
+@media (max-width: 600px) {
+    #products {
+        grid-template-columns: 1fr;  /* 1 card per row on small screens */
+    }
+}

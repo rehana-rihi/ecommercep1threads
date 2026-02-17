@@ -1,0 +1,210 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Orders - P1/Threads</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background-color: lightgray;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background-color: black;
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        
+        .header a {
+            color: white;
+            text-decoration: none;
+        }
+        
+        .home-link {
+            background-color: #3498db;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-decoration: none;
+        }
+        
+        .order-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 3px 3px 5px grey;
+        }
+        
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #ecf0f1;
+            margin-bottom: 15px;
+        }
+        
+        .order-id {
+            font-size: 18px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .order-date {
+            color: #7f8c8d;
+        }
+        
+        .order-status {
+            background: #27ae60;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+        }
+        
+        .order-items {
+            margin-bottom: 15px;
+        }
+        
+        .order-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 10px 0;
+            border-bottom: 1px solid #ecf0f1;
+        }
+        
+        .order-item img {
+            width: 50px;
+            height: 50px;
+            object-fit: contain;
+        }
+        
+        .item-details {
+            flex: 1;
+        }
+        
+        .item-title {
+            font-weight: bold;
+            font-size: 14px;
+        }
+        
+        .item-price {
+            color: #7f8c8d;
+            font-size: 13px;
+        }
+        
+        .order-total {
+            text-align: right;
+            font-size: 18px;
+            font-weight: bold;
+            color: #27ae60;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 2px solid #3498db;
+        }
+        
+        .no-orders {
+            text-align: center;
+            padding: 50px;
+            background: white;
+            border-radius: 10px;
+        }
+        
+        .no-orders h2 {
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+        
+        .no-orders p {
+            margin-bottom: 30px;
+            color: #7f8c8d;
+        }
+        
+        .shop-now-btn {
+            background: #3498db;
+            color: white;
+            padding: 12px 30px;
+            border-radius: 5px;
+            text-decoration: none;
+        }
+        
+        .shop-now-btn:hover {
+            background: #2980b9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <a href="/"><h1>P1/Threads</h1></a>
+            <div>
+                <span style="color: white; margin-right: 15px;">Hello, {{ user.username }}!</span>
+                <a href="/" class="home-link">← Continue Shopping</a>
+            </div>
+        </div>
+        
+        <h2 style="margin-bottom: 20px;">My Orders</h2>
+        
+        {% if orders %}
+            {% for order in orders %}
+            <div class="order-card">
+                <div class="order-header">
+                    <span class="order-id">Order #{{ order.id }}</span>
+                    <span class="order-date">{{ order.created_at|date:"F d, Y" }}</span>
+                    <span class="order-status">{{ order.status }}</span>
+                </div>
+                
+                <div class="order-items">
+                    {% for item in order.items.all %}
+                    <div class="order-item">
+                        <img src="{{ item.product.image }}" alt="{{ item.product.title }}">
+                        <div class="item-details">
+                            <div class="item-title">{{ item.product.title|truncatechars:50 }}</div>
+                            <div class="item-price">${{ item.product.price }} x {{ item.quantity }}</div>
+                        </div>
+                        <div><strong>${{ item.get_total|floatformat:2 }}</strong></div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <div class="order-total">
+                    Total: ${{ order.total_amount|floatformat:2 }}
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="no-orders">
+                <h2>No orders yet</h2>
+                <p>Looks like you haven't placed any orders yet.</p>
+                <a href="/" class="shop-now-btn">Start Shopping</a>
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>

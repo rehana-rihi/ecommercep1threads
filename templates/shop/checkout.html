@@ -1,0 +1,309 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout - P1/Threads</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background-color: lightgray;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+        
+        .header {
+            background-color: black;
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            grid-column: span 2;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        
+        .header a {
+            color: white;
+            text-decoration: none;
+        }
+        
+        .home-link {
+            background-color: #3498db;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-decoration: none;
+        }
+        
+        .checkout-form {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 3px 3px 5px grey;
+        }
+        
+        .order-summary {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 3px 3px 5px grey;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #bdc3c7;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        .checkout-btn {
+            background-color: #27ae60;
+            color: white;
+            padding: 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+            width: 100%;
+            margin-top: 20px;
+        }
+        
+        .checkout-btn:hover {
+            background-color: #219a52;
+        }
+        
+        .cart-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px 0;
+            border-bottom: 1px solid #ecf0f1;
+        }
+        
+        .cart-item img {
+            width: 60px;
+            height: 60px;
+            object-fit: contain;
+        }
+        
+        .item-details {
+            flex: 1;
+        }
+        
+        .item-title {
+            font-weight: bold;
+            font-size: 14px;
+        }
+        
+        .item-price {
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+        
+        .item-total {
+            font-weight: bold;
+            color: #27ae60;
+        }
+        
+        .grand-total {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px solid #3498db;
+            font-size: 20px;
+            font-weight: bold;
+            text-align: right;
+            color: #2c3e50;
+        }
+        
+        @media (max-width: 800px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+            .header {
+                grid-column: span 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="/"><h1>P1/Threads</h1></a>
+        <a href="/cart/" class="home-link">← Back to Cart</a>
+    </div>
+    
+    <div class="container">
+        <div class="checkout-form">
+            <h2 style="margin-bottom: 20px;">Shipping Information</h2>
+            
+            <form method="post" action="{% url 'place_order' %}" id="checkout-form">
+                {% csrf_token %}
+                
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" name="full_name" value="{{ user.get_full_name }}" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" name="email" value="{{ user.email }}" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Phone Number</label>
+                    <input type="tel" name="phone" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Address</label>
+                    <input type="text" name="address" required>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>City</label>
+                        <input type="text" name="city" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>ZIP Code</label>
+                        <input type="text" name="zip_code" required>
+                    </div>
+                </div>
+                
+                <button type="submit" class="checkout-btn">Place Order</button>
+            </form>
+        </div>
+        
+        <div class="order-summary">
+            <h2 style="margin-bottom: 20px;">Order Summary</h2>
+            <div id="order-items"></div>
+            <div class="grand-total" id="grand-total">Total: $0.00</div>
+        </div>
+    </div>
+
+  <script>
+    function displayOrderSummary() {
+        let cart = JSON.parse(localStorage.getItem('cart')) || [];
+        let container = document.getElementById('order-items');
+        let totalElement = document.getElementById('grand-total');
+        
+        if (cart.length === 0) {
+            window.location.href = '/cart/';
+            return;
+        }
+        
+        let html = '';
+        let total = 0;
+        
+        for (let i = 0; i < cart.length; i++) {
+            let item = cart[i];
+            total += item.price * item.quantity;
+            
+            html += `
+                <div class="cart-item">
+                    <img src="${item.image || 'https://via.placeholder.com/60'}" alt="${item.title}">
+                    <div class="item-details">
+                        <div class="item-title">${item.title.substring(0, 50)}...</div>
+                        <div class="item-price">$${item.price} x ${item.quantity}</div>
+                    </div>
+                    <div class="item-total">$${(item.price * item.quantity).toFixed(2)}</div>
+                </div>
+            `;
+        }
+        
+        container.innerHTML = html;
+        totalElement.textContent = `Total: $${total.toFixed(2)}`;
+        
+        // Store cart data in a hidden field - MAKING SURE IT EXISTS
+        let existingInput = document.getElementById('cart_data');
+        if (existingInput) {
+            existingInput.value = JSON.stringify(cart);
+        } else {
+            let cartInput = document.createElement('input');
+            cartInput.type = 'hidden';
+            cartInput.name = 'cart_data';
+            cartInput.id = 'cart_data';
+            cartInput.value = JSON.stringify(cart);
+            document.getElementById('checkout-form').appendChild(cartInput);
+        }
+        
+        console.log("Cart data saved:", JSON.stringify(cart)); // Debug
+    }
+    
+    // Handle form submission
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('checkout-form');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                // Don't prevent default - let it submit normally
+                let cart = JSON.parse(localStorage.getItem('cart')) || [];
+                if (cart.length === 0) {
+                    e.preventDefault();
+                    alert('Your cart is empty!');
+                    window.location.href = '/cart/';
+                    return;
+                }
+                
+                // Update cart_data before submit
+                let cartInput = document.getElementById('cart_data');
+                if (cartInput) {
+                    cartInput.value = JSON.stringify(cart);
+                    console.log("Submitting cart:", cartInput.value); // Debug
+                } else {
+                    e.preventDefault();
+                    alert('Error: Cart data not found!');
+                    return;
+                }
+            });
+        }
+    });
+    
+    window.onload = displayOrderSummary;
+</script>
+</body>
+</html>

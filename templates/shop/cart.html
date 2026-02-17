@@ -1,0 +1,167 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Cart - P1/Threads</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: lightgray; padding: 20px; font-family: Arial; }
+        .container { max-width: 1000px; margin: 0 auto; }
+        .header {
+            background-color: black; color: white; padding: 20px; border-radius: 10px;
+            margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center;
+        }
+        .header h1 { margin: 0; font-size: 24px; }
+        .header a { color: white; text-decoration: none; }
+        .home-link { background-color: #3498db; color: white; padding: 10px 20px; border-radius: 5px; }
+        .cart-item {
+            background: white; border-radius: 10px; padding: 20px; margin-bottom: 15px;
+            display: flex; align-items: center; gap: 20px; box-shadow: 3px 3px 5px grey;
+        }
+        .cart-item img { width: 80px; height: 80px; object-fit: contain; }
+        .item-details { flex: 1; }
+        .item-title { font-weight: bold; font-size: 16px; margin-bottom: 5px; }
+        .item-title a { color: #2c3e50; text-decoration: none; }
+        .item-price { color: #2c3e50; }
+        .item-quantity { display: flex; align-items: center; gap: 10px; }
+        .quantity-btn {
+            background: #3498db; color: white; border: none; width: 30px; height: 30px;
+            border-radius: 5px; cursor: pointer; font-size: 16px;
+        }
+        .remove-btn { background: #e74c3c; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; }
+        .cart-total {
+            background: #27ae60; color: white; padding: 20px; border-radius: 10px;
+            text-align: right; font-size: 20px; font-weight: bold; margin-top: 20px;
+        }
+        .checkout-btn {
+            background: #e67e22; color: white; padding: 15px; border: none; border-radius: 5px;
+            cursor: pointer; font-size: 18px; font-weight: bold; margin-top: 20px; width: 100%;
+        }
+        .empty-cart { text-align: center; padding: 50px; background: white; border-radius: 10px; }
+        .shop-now-btn { background: #3498db; color: white; padding: 12px 30px; border-radius: 5px; text-decoration: none; display: inline-block; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <a href="/"><h1>P1/Threads</h1></a>
+            <div>
+                {% if user.is_authenticated %}
+                    <span style="color: white; margin-right: 15px;">Hello, {{ user.username }}!</span>
+                {% endif %}
+                <a href="/" class="home-link">← Continue Shopping</a>
+            </div>
+        </div>
+        
+        <div id="cart-items-container"></div>
+    </div>
+
+    <script>
+        function displayCart() {
+            let cart = JSON.parse(localStorage.getItem('cart')) || [];
+            let container = document.getElementById('cart-items-container');
+            
+            if (cart.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-cart">
+                        <h2>🛒 Your cart is empty</h2>
+                        <p>Start shopping to add items!</p>
+                        <a href="/" class="shop-now-btn">Start Shopping</a>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '';
+            let total = 0;
+            
+            for (let i = 0; i < cart.length; i++) {
+                let item = cart[i];
+                total += item.price * item.quantity;
+                
+                html += `
+                    <div class="cart-item" data-id="${item.id}">
+                        <img src="${item.image || 'https://via.placeholder.com/80'}" alt="${item.title}">
+                        <div class="item-details">
+                            <div class="item-title">
+                                <a href="/product/${item.id}/">${item.title}</a>
+                            </div>
+                            <div class="item-price">$${item.price} each</div>
+                        </div>
+                        <div class="item-quantity">
+                            <button class="quantity-btn" onclick="updateQuantity(${item.id}, -1)">-</button>
+                            <span>${item.quantity}</span>
+                            <button class="quantity-btn" onclick="updateQuantity(${item.id}, 1)">+</button>
+                        </div>
+                        <div><strong>$${(item.price * item.quantity).toFixed(2)}</strong></div>
+                        <button class="remove-btn" onclick="removeItem(${item.id})">Remove</button>
+                    </div>
+                `;
+            }
+            
+            html += `<div class="cart-total">Total: $${total.toFixed(2)}</div>`;
+            html += `<button class="checkout-btn" onclick="checkout()">Proceed to Checkout →</button>`;
+            
+            container.innerHTML = html;
+        }
+        
+        function updateQuantity(productId, change) {
+            let cart = JSON.parse(localStorage.getItem('cart')) || [];
+            let itemIndex = -1;
+            
+            for (let i = 0; i < cart.length; i++) {
+                if (cart[i].id == productId) {
+                    itemIndex = i;
+                    break;
+                }
+            }
+            
+            if (itemIndex !== -1) {
+                cart[itemIndex].quantity += change;
+                if (cart[itemIndex].quantity <= 0) {
+                    cart.splice(itemIndex, 1);
+                }
+                localStorage.setItem('cart', JSON.stringify(cart));
+                displayCart();
+                updateCartCount();
+            }
+        }
+        
+        function removeItem(productId) {
+            let cart = JSON.parse(localStorage.getItem('cart')) || [];
+            let newCart = cart.filter(item => item.id != productId);
+            localStorage.setItem('cart', JSON.stringify(newCart));
+            displayCart();
+            updateCartCount();
+        }
+        
+        function updateCartCount() {
+            let cart = JSON.parse(localStorage.getItem('cart')) || [];
+            let total = cart.reduce((sum, item) => sum + item.quantity, 0);
+            document.getElementById('cart-count').textContent = total;
+        }
+        
+        function checkout() {
+            let cart = JSON.parse(localStorage.getItem('cart')) || [];
+            if (cart.length === 0) {
+                alert('Your cart is empty!');
+                return;
+            }
+            
+            {% if user.is_authenticated %}
+                window.location.href = '/checkout/';
+            {% else %}
+                alert('Please login to checkout!');
+                window.location.href = '/login/';
+            {% endif %}
+        }
+        
+        window.onload = function() {
+            displayCart();
+            updateCartCount();
+        };
+    </script>
+</body>
+</html>

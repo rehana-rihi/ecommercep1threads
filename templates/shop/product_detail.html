@@ -1,0 +1,241 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ product.title }} - P1/Threads</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background-color: lightgray;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background-color: black;
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        
+        .header a {
+            color: white;
+            text-decoration: none;
+        }
+        
+        .cart-link {
+            background-color: #27ae60;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .cart-link:hover {
+            background-color: #219a52;
+        }
+        
+        .product-detail {
+            background-color: white;
+            border-radius: 10px;
+            padding: 40px;
+            box-shadow: 3px 3px 5px grey;
+            display: flex;
+            gap: 50px;
+            margin-bottom: 30px;
+        }
+        
+        .product-image {
+            flex: 1;
+            text-align: center;
+        }
+        
+        .product-image img {
+            max-width: 400px;
+            max-height: 400px;
+            object-fit: contain;
+        }
+        
+        .product-info {
+            flex: 1;
+        }
+        
+        .product-title {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+        
+        .product-id {
+            color: #7f8c8d;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+        
+        .product-price {
+            font-size: 32px;
+            font-weight: bold;
+            color: #27ae60;
+            margin-bottom: 20px;
+        }
+        
+        .product-description {
+            font-size: 16px;
+            line-height: 1.6;
+            color: #34495e;
+            margin-bottom: 30px;
+        }
+        
+        .product-category {
+            background-color: #f0f0f0;
+            padding: 8px 15px;
+            border-radius: 20px;
+            display: inline-block;
+            margin-bottom: 30px;
+        }
+        
+        .add-to-cart-btn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+        
+        .add-to-cart-btn:hover {
+            background-color: #2980b9;
+        }
+        
+        .back-btn {
+            background-color: #95a5a6;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 20px;
+        }
+        
+        .back-btn:hover {
+            background-color: #7f8c8d;
+        }
+        
+        @media (max-width: 800px) {
+            .product-detail {
+                flex-direction: column;
+            }
+            
+            .product-image img {
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <a href="/"><h1>P1/Threads</h1></a>
+            <a href="/cart/" class="cart-link">
+                🛒 Cart (<span id="cart-count">0</span>)
+            </a>
+        </div>
+        
+        <div class="product-detail">
+            <div class="product-image">
+                <img src="{{ product.image }}" alt="{{ product.title }}">
+            </div>
+            <div class="product-info">
+                <div class="product-id">Product ID: #{{ product.id }}</div>
+                <div class="product-title">{{ product.title }}</div>
+                <div class="product-price">${{ product.price }}</div>
+                <div class="product-category">Category: {{ product.category }}</div>
+                <div class="product-description">{{ product.description }}</div>
+                <button class="add-to-cart-btn" data-id="{{ product.id }}" data-price="{{ product.price }}" onclick="addToCart(this)">Add to Cart</button>
+            </div>
+        </div>
+        
+        <a href="/" class="back-btn">← Back to Shopping</a>
+    </div>
+
+    <script>
+        function addToCart(button) {
+            let productId = parseInt(button.getAttribute('data-id'));
+            let productPrice = parseFloat(button.getAttribute('data-price'));
+            
+            let productTitle = "{{ product.title|escapejs }}";
+            
+            let cart = JSON.parse(localStorage.getItem('cart')) || [];
+            
+            let existingItem = null;
+            for (let i = 0; i < cart.length; i++) {
+                if (cart[i].id === productId) {
+                    existingItem = cart[i];
+                    break;
+                }
+            }
+            
+            if (existingItem) {
+                existingItem.quantity += 1;
+                alert('Added another ' + productTitle + '! (Total: ' + existingItem.quantity + ')');
+            } else {
+                cart.push({
+                    id: productId,
+                    title: productTitle,
+                    price: productPrice,
+                    quantity: 1,
+                    image: "{{ product.image }}"
+                });
+                alert('✅ ' + productTitle + ' added to cart!');
+            }
+            
+            localStorage.setItem('cart', JSON.stringify(cart));
+            updateCartCount();
+        }
+        
+        function updateCartCount() {
+            let cart = JSON.parse(localStorage.getItem('cart')) || [];
+            let totalItems = 0;
+            for (let i = 0; i < cart.length; i++) {
+                totalItems += cart[i].quantity;
+            }
+            let cartCountElement = document.getElementById('cart-count');
+            if (cartCountElement) {
+                cartCountElement.textContent = totalItems;
+            }
+        }
+        
+        window.onload = function() {
+            updateCartCount();
+        };
+    </script>
+</body>
+</html>
